@@ -31,7 +31,7 @@ GLOBAL_BLOCKED: tuple[tuple[str, str], ...] = (
 
 # Escalation phrases: checked against user-reported observations.
 ESCALATION: tuple[tuple[str, str], ...] = (
-    (r"burning|smoke|smoking|spark|scorch|melting", "burning/smoke/sparks"),
+    (r"burning|burnt|burned|smoke|smoking|spark|scorch|melting", "burning/smoke/sparks"),
     (r"hot to touch|very hot|extremely hot", "excessive heat"),
     (r"liquid|water|spilled|coffee.*inside", "liquid ingress"),
     (r"swollen|bulging|battery.*swell", "battery deformation"),

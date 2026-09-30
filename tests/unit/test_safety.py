@@ -52,6 +52,12 @@ def test_escalation_observations():
     assert check_observations("the light is amber").allowed
 
 
+def test_escalation_burnt_variants():
+    # "burnt"/"burned" are the same hazard class as "burning" and must escalate.
+    assert not check_observations("it smells burnt").allowed
+    assert not check_observations("the cable looks burned").allowed
+
+
 def test_reasons_deduplicated():
     v = check_action_text("open the router case and touch the 220v mains inside")
     assert len(v.reasons) == len(set(v.reasons))
