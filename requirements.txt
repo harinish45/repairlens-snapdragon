@@ -1,0 +1,30 @@
+# RepairLens — pinned local stack (Windows / Linux, Python >= 3.11)
+# Install:  python -m pip install -r requirements.txt
+#
+# NOTE ON av: faster-whisper 1.2.1 (latest) calls
+#   av.open(path, mode="r", metadata_errors="ignore")
+# PyAV 19.0.0 removed that (undocumented) keyword argument, which breaks all
+# audio decoding with "open() got an unexpected keyword argument 'metadata_errors'".
+# PyAV 18.1.0 ships an abi3 wheel (works on Python 3.12–3.14+) and accepts it.
+# Do not bump past 18.x until faster-whisper removes that kwarg upstream.
+av==18.1.0
+faster-whisper==1.2.1
+ctranslate2==4.8.2
+
+# Vision (classical CV — no OpenCV needed)
+numpy==2.5.1
+pillow==12.3.0
+
+# API / UI
+fastapi==0.141.1
+uvicorn==0.52.4
+
+# Knowledge base
+PyYAML==6.0.3
+
+# Runtime profile / NPU probing (optional at runtime, required for QNN experiments)
+onnxruntime==1.29.0
+
+# Tests
+pytest==9.1.1
+httpx==0.28.1

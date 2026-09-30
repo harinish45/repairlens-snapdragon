@@ -134,3 +134,22 @@ offline-first, CPU-verified now, NPU-ready architecture.
   repo at `c:\Documents\Projects\repairlens-snapdragon` with remote
   `https://github.com/harinish45/repairlens-snapdragon.git` (exists, empty; gh authenticated).
 - **Evidence:** VERIFIED via `git rev-parse` + GitHub fetch.
+
+### ADR-009 — Pin PyAV `av<19` so faster-whisper audio decoding keeps working
+- **Decision:** `requirements.txt` pins `av==18.1.0` (cp311-abi3 wheel — installs on
+  Python 3.12 through 3.14+).
+- **Problem found (live):** faster-whisper 1.2.1 (latest on PyPI, 2025-10-31) decodes audio with
+  `av.open(path, mode="r", metadata_errors="ignore")`. PyAV 19.0.0 removed that (undocumented)
+  keyword argument, so every `/api/transcribe` call failed with
+  `TypeError: open() got an unexpected keyword argument 'metadata_errors'` → HTTP 503
+  `asr_unavailable`. All voices were silenced by one dependency bump.
+- **Alternatives:**
+  (a) patch faster-whisper's `audio.py` locally — fragile; breaks silently on updates;
+  (b) replace upstream decoding with our own PyAV→ndarray pipeline — ~40 lines to maintain and
+  bypasses future upstream fixes;
+  (c) wait for an upstream release — none scheduled as of the latest PyPI release.
+- **Evidence:** reproduced on Python 3.14/Windows; after `pip install av==18.1.0`, the ASR smoke
+  (real Windows TTS speech → `/api/transcribe`) returns the correct transcript in ~1.5 s for
+  6.8 s of audio.
+- **Consequences:** the pin is load-bearing for HEAR and is documented in `requirements.txt`.
+  Revisit when faster-whisper stops passing `metadata_errors` (check upstream release notes).
