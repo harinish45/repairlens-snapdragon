@@ -87,7 +87,10 @@ _TRANSITIONS: dict[str, tuple[frozenset[State], State]] = {
     ),
     "reset": (frozenset(s for s in State if s is not State.IDLE), State.IDLE),
     "insufficient_evidence": (
-        frozenset({State.DEVICE_DETECTED, State.SYMPTOM_IDENTIFIED, State.EVIDENCE_COLLECTED}),
+        frozenset(
+            {State.IDLE, State.UNCERTAIN, State.DEVICE_DETECTED,
+             State.SYMPTOM_IDENTIFIED, State.EVIDENCE_COLLECTED}
+        ),
         State.UNCERTAIN,
     ),
 }
