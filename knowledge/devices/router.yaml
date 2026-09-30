@@ -1,0 +1,157 @@
+device_id: router_home
+name: Home Wi-Fi Router
+category: network
+safety_class: low_voltage_user_serviceable
+summary: >-
+  Typical consumer broadband router with status LEDs. Safe first-line troubleshooting
+  covers power cycling, cable re-seating and pinhole resets only.
+
+components:
+  - id: wan_port
+    label: WAN / Internet port (often yellow or labelled Internet)
+  - id: lan_ports
+    label: LAN ports (1-4)
+  - id: power_button
+    label: Power button
+  - id: power_cable
+    label: DC power cable
+  - id: status_led
+    label: Main status LED (front)
+
+indicators:
+  - id: status_led
+    component: status_led
+    observed_values:
+      - value: green_solid
+        meaning: Online and healthy
+        confidence_hint: 0.9
+      - value: green_blinking
+        meaning: Booting or negotiating (transient, settles in ~60 s)
+        confidence_hint: 0.85
+      - value: amber_solid
+        meaning: Connected to modem but no internet (WAN problem) or limited mode
+        confidence_hint: 0.85
+      - value: amber_blinking
+        meaning: Starting up or firmware activity (transient)
+        confidence_hint: 0.8
+      - value: red_solid
+        meaning: Fault condition reported by router
+        confidence_hint: 0.85
+      - value: off
+        meaning: No power
+        confidence_hint: 0.9
+      - value: unknown
+        meaning: Not visible / cannot be classified reliably
+        confidence_hint: 0.0
+
+symptoms:
+  - id: no_network
+    keywords: [network, internet, wifi, wi-fi, connect, connection, offline, dropped, drop]
+    description: Device or network not connecting / no internet access
+  - id: no_power
+    keywords: [power, dead, turn, on, boot, lifeless, led]
+    description: Router appears dead or LEDs off
+  - id: slow_network
+    keywords: [slow, speed, buffering, lag]
+    description: Connectivity works but performance is poor
+
+# Hypotheses are tried in priority order; evidence filters decide inclusion.
+hypotheses:
+  - id: wan_cable_loose
+    symptom: no_network
+    title: WAN/Ethernet cable is loose or unplugged
+    evidence_requires_any: [wan_cable_unseated, led_not_green]
+    evidence_excludes_any: [led_green_solid]
+    confidence: 0.62
+    action:
+      id: reseat_wan_cable
+      text: Reseat the WAN/Internet cable at both the router and the modem until it clicks.
+      safety: safe
+      expected_visual_change:
+        indicator: status_led
+        from_any: [amber_solid, amber_blinking, off, unknown]
+        to: green_solid
+        wait_s: 45
+      verification_note: Watch the status LED for up to 45 seconds after reseating.
+
+  - id: router_needs_restart
+    symptom: no_network
+    title: Router needs a restart (stale session / crashed radio)
+    evidence_requires_any: [led_amber_solid, led_amber_blinking, led_red_solid, led_unknown]
+    evidence_excludes_any: [led_green_solid]
+    confidence: 0.55
+    action:
+      id: power_cycle_router
+      text: "Power cycle the router: press the power button off, wait 10 seconds, turn it back on."
+      safety: safe
+      expected_visual_change:
+        indicator: status_led
+        from_any: [amber_solid, amber_blinking, red_solid, green_blinking, unknown]
+        to: green_solid
+        wait_s: 90
+      verification_note: The LED will blink while booting, then should stay solid green.
+
+  - id: modem_down
+    symptom: no_network
+    title: Upstream modem/ONT is down
+    evidence_requires_any: [led_amber_solid, led_red_solid]
+    confidence: 0.48
+    action:
+      id: check_modem_power
+      text: Check that the modem (box between router and wall socket) has power and its ONLINE light is solid. If it is off, stop here and contact your internet provider — I can't safely troubleshoot the modem further.
+      safety: safe
+      expected_visual_change:
+        indicator: status_led
+        from_any: [amber_solid, red_solid]
+        to: green_solid
+        wait_s: 120
+      verification_note: Router LED turns green once the modem comes online.
+
+  - id: no_power_source
+    symptom: no_power
+    title: Power cable or outlet problem
+    evidence_requires_any: [led_off]
+    confidence: 0.7
+    action:
+      id: check_power_cable
+      text: Reseat the power cable at the router and try a different known-working wall outlet. Do not open the power adapter.
+      safety: safe
+      expected_visual_change:
+        indicator: status_led
+        from_any: [off]
+        to_any: [green_blinking, green_solid, amber_solid, amber_blinking]
+        wait_s: 30
+      verification_note: Any LED activity means power is restored.
+
+  - id: congestion
+    symptom: slow_network
+    title: Network congestion or interference
+    evidence_requires_any: [led_green_solid]
+    confidence: 0.45
+    action:
+      id: reduce_load
+      text: Pause large downloads/streaming on other devices for 2 minutes and move closer to the router, then retest.
+      safety: safe
+      expected_visual_change:
+        indicator: status_led
+        from_any: [green_solid]
+        to: green_solid
+        wait_s: 10
+      verification_note: The LED stays green (unchanged) — confirm speed improved on your device.
+
+blocked_actions:
+  - pattern: open the (router|case|enclosure)|open up|disassemble
+    reason: Opening the router enclosure exposes mains-adjacent components.
+  - pattern: mains|wall socket.*wire|220v|120v|high voltage|electrician.*wire
+    reason: Mains electricity work is never performed.
+  - pattern: swollen|bulging|leaking (battery|capacitor)
+    reason: Damaged batteries/capacitors require qualified service.
+
+escalation_conditions:
+  - smell: burning or hot plastic smell → STOP, unplug if safe, recommend qualified service
+  - damage: visible scorch marks or liquid ingress → STOP, recommend qualified service
+
+resolution_criteria:
+  no_network: status_led is green_solid AND user confirms internet works on a client device
+  no_power: status_led shows any activity after power reseat
+  slow_network: user confirms acceptable performance after load reduction

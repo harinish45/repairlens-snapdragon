@@ -1,0 +1,114 @@
+device_id: monitor_display
+name: External Computer Monitor
+category: display
+safety_class: low_voltage_user_serviceable
+summary: >-
+  Standalone monitor with power/input LEDs. Safe first-line steps: power cycle,
+  input source selection, cable re-seat (HDMI/DP/USB-C).
+
+components:
+  - id: power_button
+    label: Power button (under bezel)
+  - id: input_button
+    label: Input / source button or menu joystick
+  - id: video_cable
+    label: HDMI / DisplayPort / USB-C cable
+  - id: power_cable
+    label: IEC or DC power cable
+  - id: status_led
+    label: Status LED (usually bottom bezel)
+
+indicators:
+  - id: status_led
+    component: status_led
+    observed_values:
+      - value: white_solid
+        meaning: On, signal present (normal)
+        confidence_hint: 0.9
+      - value: white_blinking
+        meaning: On, no signal / searching (common fault state)
+        confidence_hint: 0.85
+      - value: amber_solid
+        meaning: Standby
+        confidence_hint: 0.85
+      - value: amber_blinking
+        meaning: Sleep with error hint (model dependent)
+        confidence_hint: 0.7
+      - value: off
+        meaning: No power
+        confidence_hint: 0.9
+      - value: unknown
+        meaning: Not classifiable
+        confidence_hint: 0.0
+    note: "white ≈ green mapping: our color analyzer reports green_solid for healthy white LEDs; see mapping table in vision code."
+
+symptoms:
+  - id: no_picture
+    keywords: [picture, screen, display, signal, input, black, blank, monitor]
+    description: Monitor on but no picture / no signal
+  - id: no_power
+    keywords: [power, dead, turn, on, light]
+    description: Monitor does not power on
+
+hypotheses:
+  - id: wrong_input
+    symptom: no_picture
+    title: Monitor is on the wrong input source
+    evidence_requires_any: [led_white_blinking, led_amber_solid, led_green_blinking]
+    confidence: 0.55
+    action:
+      id: cycle_input
+      text: Press the Input/Source button on the monitor and cycle to the input your cable is plugged into (HDMI 1/2, DP, USB-C).
+      safety: safe
+      expected_visual_change:
+        indicator: status_led
+        from_any: [white_blinking, amber_solid, green_blinking]
+        to_any: [white_solid, green_solid]
+        wait_s: 10
+      verification_note: Picture should appear; LED becomes solid.
+
+  - id: video_cable_loose
+    symptom: no_picture
+    title: Video cable loose at monitor or PC end
+    evidence_requires_any: [led_white_blinking, led_green_blinking]
+    confidence: 0.6
+    action:
+      id: reseat_video_cable
+      text: Reseat the video cable at both ends until the connector screws/clicks fully home, then power cycle the monitor.
+      safety: safe
+      expected_visual_change:
+        indicator: status_led
+        from_any: [white_blinking, green_blinking]
+        to_any: [white_solid, green_solid]
+        wait_s: 15
+      verification_note: "'No signal' message disappears within seconds."
+
+  - id: monitor_no_power
+    symptom: no_power
+    title: Power cable or outlet issue
+    evidence_requires_any: [led_off]
+    confidence: 0.7
+    action:
+      id: check_monitor_power
+      text: Reseat the monitor power cable at both ends and try a different known-working outlet.
+      safety: safe
+      expected_visual_change:
+        indicator: status_led
+        from_any: [off]
+        to_any: [amber_solid, white_blinking, green_blinking, white_solid, green_solid]
+        wait_s: 20
+      verification_note: LED lights up.
+
+blocked_actions:
+  - pattern: open the (monitor|back panel|case)
+    reason: Monitor power boards store charge; opening is unsafe.
+  - pattern: mains|capacitor|high voltage|220v|120v
+    reason: Mains/voltage work is never performed.
+
+escalation_conditions:
+  - smell: burning smell → STOP, recommend qualified service
+  - damage: cracked panel with leaking liquid → STOP, recommend qualified service
+
+resolution_criteria:
+  no_picture: picture visible AND user confirms, status LED solid
+  no_power: LED active after power reseat

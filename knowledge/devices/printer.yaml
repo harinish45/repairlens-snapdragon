@@ -1,0 +1,137 @@
+device_id: printer_office
+name: Office Inkjet/Laser Printer
+category: peripheral
+safety_class: low_voltage_user_serviceable
+summary: >-
+  Common office printer with status LED/LCD and paper path. Safe first-line steps:
+  paper reload, cartridge reseat guidance, queue restart, power cycle.
+
+components:
+  - id: paper_tray
+    label: Paper tray
+  - id: cartridges
+    label: Ink/toner cartridges (under access panel)
+  - id: power_button
+    label: Power button
+  - id: status_led
+    label: Status LED / small display
+  - id: usb_port
+    label: USB / network port
+
+indicators:
+  - id: status_led
+    component: status_led
+    observed_values:
+      - value: green_solid
+        meaning: Ready
+        confidence_hint: 0.9
+      - value: green_blinking
+        meaning: Printing / waking up (transient)
+        confidence_hint: 0.85
+      - value: amber_solid
+        meaning: Attention needed (paper empty, cartridge low, lid open)
+        confidence_hint: 0.85
+      - value: amber_blinking
+        meaning: Error in progress
+        confidence_hint: 0.8
+      - value: red_solid
+        meaning: Hard fault (paper jam / fatal error)
+        confidence_hint: 0.85
+      - value: off
+        meaning: No power
+        confidence_hint: 0.9
+      - value: unknown
+        meaning: Not classifiable
+        confidence_hint: 0.0
+
+symptoms:
+  - id: print_fail
+    keywords: [print, printing, queue, job, stuck, pending, output, page]
+    description: Print jobs not printing / stuck queue
+  - id: paper_jam_indicator
+    keywords: [jam, paper, feed, pick, error, light, flashing]
+    description: Printer reports error / jam indicator
+  - id: no_power
+    keywords: [power, dead, turn, on, off]
+    description: Printer does not power on
+
+hypotheses:
+  - id: empty_paper
+    symptom: paper_jam_indicator
+    title: Paper tray empty or misaligned
+    evidence_requires_any: [led_amber_solid]
+    confidence: 0.58
+    action:
+      id: reload_paper
+      text: Open the paper tray, reload a small stack of aligned paper, and close the tray firmly.
+      safety: safe
+      expected_visual_change:
+        indicator: status_led
+        from_any: [amber_solid, amber_blinking]
+        to: green_solid
+        wait_s: 15
+      verification_note: Attention light should clear within seconds.
+
+  - id: jam_clear
+    symptom: paper_jam_indicator
+    title: Paper jam blocking the path
+    evidence_requires_any: [led_red_solid, led_amber_blinking]
+    confidence: 0.6
+    action:
+      id: clear_jam
+      text: Open the rear/top access door and gently pull out any jammed paper in the direction of paper travel. Do not reach into the fuser area of a laser printer.
+      safety: safe
+      expected_visual_change:
+        indicator: status_led
+        from_any: [red_solid, amber_blinking]
+        to_any: [green_solid, green_blinking, amber_solid]
+        wait_s: 20
+      verification_note: Jam indicator should clear after the path is free.
+
+  - id: queue_stuck
+    symptom: print_fail
+    title: Spooler queue stuck with a paused job
+    evidence_requires_any: [led_green_solid, led_unknown]
+    evidence_excludes_any: [led_red_solid]
+    confidence: 0.55
+    action:
+      id: restart_print_job
+      text: Cancel all pending jobs on the printer panel, then reprint a single test page.
+      safety: safe
+      expected_visual_change:
+        indicator: status_led
+        from_any: [green_solid, green_blinking]
+        to: green_solid
+        wait_s: 20
+      verification_note: LED returns to ready; confirm the job actually prints.
+
+  - id: printer_power_fault
+    symptom: no_power
+    title: Power cable / outlet issue
+    evidence_requires_any: [led_off]
+    confidence: 0.7
+    action:
+      id: check_printer_power
+      text: Reseat the power cable at the printer and switch to a known-working outlet. Do not open the printer.
+      safety: safe
+      expected_visual_change:
+        indicator: status_led
+        from_any: [off]
+        to_any: [green_blinking, green_solid, amber_solid]
+        wait_s: 30
+      verification_note: Any LED activity means power restored.
+
+blocked_actions:
+  - pattern: open the (printer|fuser)|inside the fuser
+    reason: Fuser area gets hot; opening printer internals beyond the paper path is unsafe.
+  - pattern: mains|high voltage|220v|120v
+    reason: Mains electricity work is never performed.
+
+escalation_conditions:
+  - smell: burning smell from printer → STOP, recommend qualified service
+  - heat: extremely hot housing → STOP, power off, recommend qualified service
+
+resolution_criteria:
+  print_fail: user confirms a test page printed AND status LED green_solid
+  paper_jam_indicator: jam indicator cleared AND paper feeds normally
+  no_power: LED active after power reseat
