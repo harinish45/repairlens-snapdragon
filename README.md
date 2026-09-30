@@ -55,10 +55,17 @@ and never claims the problem is fixed until it has *seen* the change.
 ## Verify it yourself
 
 ```powershell
-python -m pytest tests -q          # 56 tests: state machine, safety, KB/BM25, vision, closed loop
+python -m pytest tests -q          # 59 tests: state machine, safety, KB/BM25, vision, offline probe, closed loop
 python scripts\e2e_smoke.py        # full closed loop against the running server (incl. vision) → PASS
 python scripts\asr_smoke.py x.wav  # audio path: real speech → transcript over /api/transcribe
 ```
+
+**Offline verification (proved, not assumed).** Restart the server with the model hub forced
+offline — set `$env:HF_HUB_OFFLINE=1; $env:HF_HUB_DISABLE_TELEMETRY=1` before `uvicorn` — then run
+`python scripts\asr_smoke.py <file.wav>`: the cached `tiny.en` model loads and transcribes with
+hub network access forbidden, and `scripts\e2e_smoke.py` still passes the full loop. The app's own
+code contains no non-localhost URLs (audited), and the offline-connectivity badge logic is pinned
+by unit tests.
 
 ## Benchmarks (measured, not claimed)
 
@@ -88,7 +95,7 @@ diagnostics/    state machine · rules/hypotheses · safety gate
 knowledge/      curated YAML device files (router, monitor, printer) + loader + retrieval
 benchmarks/     bench.py + results/latest.json (machine-specific, git-ignored)
 scripts/        run_benchmarks.ps1 · e2e_smoke.py · asr_smoke.py
-tests/          unit + integration (closed loop) — 56 tests
+tests/          unit + integration (closed loop) — 59 tests
 docs/           architecture · decisions (ADRs) · models · benchmarks · safety · hardware-audit
 presentation/   pitch + demo script for the competition
 ```

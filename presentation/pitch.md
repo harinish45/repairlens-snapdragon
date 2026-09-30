@@ -40,7 +40,7 @@ The language model may explain and structure — it can never invent a transitio
 | Closed loop (SEE→…→VERIFY) | passes end-to-end incl. live vision (`scripts\e2e_smoke.py`) |
 | LED/indicator vision | **p50 27.6 ms**, p95 31.8 ms, 30/30 correct classifications |
 | Speech → text (tiny.en, int8) | **p50 0.90 s** for 6.8 s of audio, correct transcript |
-| Unit + integration tests | 55 passing |
+| Unit + integration tests | 59 passing |
 | Snapdragon / NPU / QNN | **not present on this machine — NOT EXECUTED** (see honesty section) |
 
 ## The Snapdragon story (Snapdragon-first design, honestly labeled)
