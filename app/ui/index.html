@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepairLens — AI Technician</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header id="topbar">
+  <div class="brand">
+    <span class="logo">◉</span>
+    <div>
+      <h1>RepairLens</h1>
+      <p class="tagline">SEE → HEAR → UNDERSTAND → DIAGNOSE → GUIDE → VERIFY</p>
+    </div>
+  </div>
+  <div class="badges">
+    <span id="badge-net" class="badge badge-net">…</span>
+    <span id="badge-ep" class="badge badge-ep">…</span>
+    <span id="badge-llm" class="badge badge-llm">…</span>
+    <span id="badge-asr" class="badge badge-asr">…</span>
+  </div>
+</header>
+
+<div id="pipeline">
+  <div class="stage" data-stage="0">SEE</div>
+  <div class="stage" data-stage="1">HEAR</div>
+  <div class="stage" data-stage="2">UNDERSTAND</div>
+  <div class="stage" data-stage="3">DIAGNOSE</div>
+  <div class="stage" data-stage="4">GUIDE</div>
+  <div class="stage" data-stage="5">VERIFY</div>
+</div>
+
+<main id="grid">
+  <!-- CAMERA COLUMN -->
+  <section class="panel" id="camera-panel">
+    <h2>Camera</h2>
+    <div id="video-wrap">
+      <video id="video" autoplay playsinline muted></video>
+      <div id="video-placeholder">Camera off</div>
+    </div>
+    <div class="btn-row">
+      <button id="btn-cam" class="btn">Start camera</button>
+      <button id="btn-shot" class="btn btn-accent" disabled>Capture evidence</button>
+    </div>
+    <div id="vision-out" class="evidence-chip hidden">—</div>
+
+    <h2>Microphone</h2>
+    <div class="btn-row">
+      <button id="btn-mic" class="btn">Start microphone</button>
+      <button id="btn-record" class="btn btn-accent" disabled>Record symptom</button>
+    </div>
+    <div id="mic-state" class="hint">Microphone idle</div>
+    <input id="symptom-text" type="text"
+           placeholder="…or type the problem, e.g. 'wifi not connecting'">
+    <button id="btn-send-symptom" class="btn btn-wide">Send symptom</button>
+  </section>
+
+  <!-- WORKFLOW COLUMN -->
+  <section class="panel" id="flow-panel">
+    <h2>Device</h2>
+    <div id="device-buttons" class="btn-row"></div>
+
+    <h2>Status</h2>
+    <div id="state-line"><span class="state-pill" id="state-pill">IDLE</span></div>
+    <div id="progress-track"><div id="progress-fill"></div></div>
+    <p id="status-msg" class="status-msg">Ready. Select the device and describe the problem.</p>
+
+    <div id="evidence-block" class="block hidden">
+      <h3>Evidence <span class="tag tag-observed">OBSERVED</span></h3>
+      <ul id="evidence-list"></ul>
+    </div>
+
+    <div id="diagnosis-block" class="block hidden">
+      <h3>Diagnosis <span class="tag tag-likely">LIKELY</span></h3>
+      <p id="explanation"></p>
+      <ul id="hyp-list"></ul>
+      <div class="confidence-row">
+        <span>Confidence</span>
+        <div class="meter"><div id="conf-fill"></div></div>
+        <span id="conf-val">0%</span>
+      </div>
+    </div>
+
+    <div id="action-block" class="block hidden">
+      <h3>Next safe action</h3>
+      <p id="action-text"></p>
+      <p id="action-verify" class="hint"></p>
+      <div class="btn-row">
+        <button id="btn-done" class="btn btn-go">I performed the action</button>
+      </div>
+    </div>
+
+    <div id="verify-block" class="block hidden">
+      <h3>Verification</h3>
+      <p id="verify-msg"></p>
+      <div class="btn-row">
+        <button id="btn-reobserve" class="btn btn-accent">Re-observe indicator</button>
+      </div>
+    </div>
+
+    <div id="safety-block" class="block block-danger hidden">
+      <h3>⚠ SAFETY STOP</h3>
+      <ul id="safety-list"></ul>
+      <p>STOP → WARN → RECOMMEND QUALIFIED SERVICE</p>
+    </div>
+
+    <div class="btn-row">
+      <button id="btn-reset" class="btn btn-ghost">New session</button>
+    </div>
+  </section>
+
+  <!-- SYSTEM COLUMN -->
+  <section class="panel" id="sys-panel">
+    <h2>Snapdragon / System</h2>
+    <table id="sys-table"><tbody></tbody></table>
+
+    <h2>Benchmarks</h2>
+    <div id="bench-box" class="hint">Loading…</div>
+
+    <h2>Event log</h2>
+    <ol id="event-log"></ol>
+  </section>
+</main>
+
+<footer>
+  RepairLens runs fully locally on this device. Camera frames and audio never leave
+  <code>localhost</code>. Evidence classification: OBSERVED / LIKELY / UNCERTAIN.
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
